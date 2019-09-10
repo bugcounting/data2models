@@ -6,6 +6,7 @@ white.file <- "winequality-white.csv"
 red.df <- read.csv(red.file, header=TRUE, sep=";", dec=".")
 white.df <- read.csv(white.file, header=TRUE, sep=";", dec=".")
 
+m.vacidity <- lm(quality ~ 1 + volatile.acidity, data = red.df)
 m.all <- lm(quality ~ 1 + fixed.acidity + volatile.acidity + citric.acid + residual.sugar + chlorides + free.sulfur.dioxide + total.sulfur.dioxide + density + pH + sulphates + alcohol,
             data = red.df)
 
