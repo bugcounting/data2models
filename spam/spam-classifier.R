@@ -107,7 +107,7 @@ posterior <- function(msg.path, training.df, prior=0.5, missing=1e-6)
     common.terms <- intersect(names(term.counts), training.df$term)
     ## likelihood P(data | training)
     likelihood <- if(length(common.terms) > 0)
-                      prod(training.df$freq.found[match(common.terms, training.df$term)], na.rm=TRUE)
+                      prod(training.df$freq.found[match(common.terms, training.df$term)])
                   else missing^length(term.counts)
     ## posterior = likelihood * prior
     return(likelihood * prior)
