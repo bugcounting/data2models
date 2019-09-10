@@ -105,11 +105,10 @@ posterior <- function(msg.path, training.df, prior=0.5, missing=1e-6)
     term.counts <- rowSums(msg.matrix)
     ## terms in `msg` that are also in training set
     common.terms <- intersect(names(term.counts), training.df$term)
-    ## likelihood P(data | training)
-    likelihood <- if(length(common.terms) > 0)
-                      prod(training.df$freq.found[match(common.terms, training.df$term)]) *
-                          missing^(length(term.counts)-length(common.terms))
-                  else missing^length(term.counts)
+    ## Likelihood for independent data points: product of P(data | training)
+    ## For terms not in the training set, we use a small probability `missing`
+    likelihood <- prod(training.df$freq.found[match(common.terms, training.df$term)]) *
+                                    missing^(length(term.counts)-length(common.terms))
     ## posterior = likelihood * prior
     return(likelihood * prior)
 }
