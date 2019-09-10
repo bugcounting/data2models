@@ -9,4 +9,3 @@ done
 wget "http://www.aueb.gr/users/ion/data/lingspam_public.tar.gz"
 tar xvf lingspam_public.tar.gz lingspam_public/bare
 rm lingspam_public.tar.gz
-
