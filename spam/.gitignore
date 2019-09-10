@@ -5,3 +5,5 @@ hard_ham/
 spam/
 spam_2/
 *~
+*.gz
+lingspam_public/
