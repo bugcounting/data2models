@@ -145,3 +145,8 @@ easyham2.classify <- is.spam(easyham2.docs, spam.df, ham.df)
 positives <- sum(hardham.classify$is.spam)
 negatives <- sum(!hardham.classify$is.spam)
 false.pos <- positives/(positives + negatives)
+
+## Changing priors only has some effect on examples where classification is mixed
+hardham.classify.2 <- is.spam(hardham.docs, spam.df, ham.df, prior=0.05)
+spam2.classify.2 <- is.spam(spam2.docs, spam.df, ham.df, prior=0.05)
+easyham2.classify.2 <- is.spam(easyham2.docs, spam.df, ham.df, prior=0.05)
