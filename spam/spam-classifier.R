@@ -1,14 +1,14 @@
 #!  /usr/bin/env Rscript
 
 ## Text of email message at `path`
-body <- function (path)
+body <- function (path, lingspam=FALSE)
 {
     # open file at `path` in read text mode (rt)
     fp <- file(path, open="rt", encoding="latin1")
     # extract lines as vector
     text <- readLines(fp)
     # drop lines before first empty line
-    msg <- text[seq(which(text=="")[1]+1, length(text), 1)]
+    msg <- if (lingspam) text else text[seq(which(text=="")[1]+1, length(text), 1)]
     close(fp)
     # return body as a single string with line breaks
     return(paste(msg, collapse="\n"))
@@ -173,3 +173,16 @@ labels <- c(rep(FALSE, nrow(hardham.classify)),
             rep(FALSE, nrow(easyham2.classify)))
 all.classify <- rbind(hardham.classify, spam2.classify, easyham2.classify)
 performance(all.classify, labels)
+
+
+ls.path <- "lingspam_public/bare/"
+ls.test.path <- "lingspam_public/bare/part10/"
+
+ls.test.docs <- dir(ls.test.path)
+ls.test.docs <- sapply(ls.test.docs, function(p) paste(ls.test.path, p, sep=""))
+## Create correct classification label (TRUE == is.spam) according to filename
+fnames <- names(ls.test.docs)
+labels <- rep(FALSE, length(ls.test.docs))
+labels[sapply(fnames, function(fn) grepl("spmsg.*[.]txt", fn))] <- TRUE
+
+ls.test.classify <- is.spam(ls.test.docs, spam.df, ham.df)
