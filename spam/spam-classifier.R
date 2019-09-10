@@ -186,3 +186,4 @@ labels <- rep(FALSE, length(ls.test.docs))
 labels[sapply(fnames, function(fn) grepl("spmsg.*[.]txt", fn))] <- TRUE
 
 ls.test.classify <- is.spam(ls.test.docs, spam.df, ham.df)
+performance(ls.test.classify, labels)
