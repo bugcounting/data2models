@@ -21,16 +21,19 @@ easyham.path <- "easy_ham/"
 easyham2.path <- "easy_ham_2/"
 hardham.path <- "hard_ham/"
 
+
 ## List all files in `spam.path`
 spam.files <- dir(spam.path)
 ## Remove file `cmds`, which is just a script
 spam.files  <- spam.files[spam.files != "cmds"]
+spam.docs <- sapply(spam.files, function(p) paste(spam.path, p, sep=""))
 ## extract body of all spam messages
 spam.bodies <- sapply(spam.files, function(p) body(paste(spam.path, p, sep="")))
 
 ## Same for ham files
 ham.files <- dir(easyham.path)
 ham.files <- ham.files[ham.files != "cmds"]
+easyham.docs <- sapply(ham.files, function(p) paste(easyham.path, p, sep=""))
 ## Make ham/spam sets balanced
 ham.files <- ham.files[1:length(spam.files)]
 ham.bodies <- sapply(ham.files, function(p) body(paste(easyham.path, p, sep="")))
@@ -126,9 +129,19 @@ hardham.docs <- dir(hardham.path)
 hardham.docs <- hardham.docs[which(hardham.docs != "cmds")]
 hardham.docs <- sapply(hardham.docs, function(p) paste(hardham.path, p, sep=""))
 
+spam2.docs <- dir(spam2.path)
+spam2.docs  <- spam2.docs[spam2.docs != "cmds"]
+spam2.docs <- sapply(spam2.docs, function(p) paste(spam2.path, p, sep=""))
+
+easyham2.docs <- dir(easyham2.path)
+easyham2.docs  <- easyham2.docs[easyham2.docs != "cmds"]
+easyham2.docs <- sapply(easyham2.docs, function(p) paste(easyham2.path, p, sep=""))
+
 hardham.classify <- is.spam(hardham.docs, spam.df, ham.df)
 ## summary(hardham.classify)
+spam2.classify <- is.spam(spam2.docs, spam.df, ham.df)
+easyham2.classify <- is.spam(easyham2.docs, spam.df, ham.df)
 
 positives <- sum(hardham.classify$is.spam)
 negatives <- sum(!hardham.classify$is.spam)
-misclassified <- positives/(positives + negatives)
+false.pos <- positives/(positives + negatives)
