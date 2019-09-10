@@ -54,10 +54,10 @@ term.doc.matrix <- function (docs)
 }
 
 ## Data frame with statistics about words in `docs`:
-##   term: the word
-##   count: how many times the word appeared
-##   freq.found: fraction of documents where the word appeared
-##   density: count/sum(count)
+##   - term: the word
+##   - count: how many times the word appeared
+##   - freq.found: fraction of documents where the word appeared
+##   - density: count/sum(count)
 term.freq.table <- function (docs)
 {
     spam.matrix <- term.doc.matrix(docs)
@@ -150,3 +150,26 @@ false.pos <- positives/(positives + negatives)
 hardham.classify.2 <- is.spam(hardham.docs, spam.df, ham.df, prior=0.05)
 spam2.classify.2 <- is.spam(spam2.docs, spam.df, ham.df, prior=0.05)
 easyham2.classify.2 <- is.spam(easyham2.docs, spam.df, ham.df, prior=0.05)
+
+
+performance <- function(classify.df, label)
+{
+    if (length(label) != nrow(classify.df))
+        label <- rep(label[1], nrow(classify.df))
+    df <- cbind(classify.df, label=label)
+    true.positives <- sum(df$is.spam & df$label)
+    true.negatives <- sum(!df$is.spam & !df$label)
+    false.positives <- sum(df$is.spam & !df$label)
+    false.negatives <- sum(!df$is.spam & df$label)
+    list(true.positives=true.positives, true.negatives=true.negatives,
+         false.positives=false.positives, false.negatives=false.negatives,
+         accuracy=(true.positives+true.negatives)/(true.positives+true.negatives+false.positives+false.negatives),
+         false.discovery.rate=false.positives/(false.positives+true.positives),
+         false.omission.rate=false.negatives/(false.negatives+true.negatives))
+}
+
+labels <- c(rep(FALSE, nrow(hardham.classify)),
+            rep(TRUE, nrow(spam2.classify)),
+            rep(FALSE, nrow(easyham2.classify)))
+all.classify <- rbind(hardham.classify, spam2.classify, easyham2.classify)
+performance(all.classify, labels)
