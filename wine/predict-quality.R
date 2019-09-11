@@ -2,9 +2,11 @@
 
 red.file <- "winequality-red.csv"
 white.file <- "winequality-white.csv"
+wine.file <- "wine.csv"
 
 red.df <- read.csv(red.file, header=TRUE, sep=";", dec=".")
 white.df <- read.csv(white.file, header=TRUE, sep=";", dec=".")
+wine.df <- read.csv(wine.file, header=TRUE, sep=",", dec=".")
 
 m.vacidity <- lm(quality ~ 1 + volatile.acidity, data = red.df)
 m.all <- lm(quality ~ 1 + fixed.acidity + volatile.acidity + citric.acid + residual.sugar + chlorides + free.sulfur.dioxide + total.sulfur.dioxide + density + pH + sulphates + alcohol,
@@ -22,3 +24,8 @@ summary.ci <- function(m)
     data.frame(predictor=predictors, estimate=estimates, error=errors, p0.05=p0.05, p0.95=p0.95)
 }
 
+## plot(hue ~ alcohol, data=wine.df)
+## plot(color.intensity ~ alcohol, data=wine.df)
+
+m.color1 <- lm(color.intensity ~ 1 + alcohol, data=wine.df)
+m.color2 <- lm(color.intensity ~ 1 + alcohol + alcalinity + magnesium + flavanoids + phenols.total, data=wine.df)
