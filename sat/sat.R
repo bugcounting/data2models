@@ -26,6 +26,14 @@ cnf <- function(fml, p)
         return (cnf(as.character(exp[2]), p))
     op  <- as.character(exp[1])
     x  <- as.character(exp[2])
+    if (op == "not") {
+        x.cnf  <- cnf(x, p)
+        not.x  <- lapply(x.cnf, function(r) -1*r)
+        lens  <- lapply(not.x, function(r) 1:length(r))
+        grid  <- expand.grid(lens)
+        grid  <- split(grid, unlist(seq(nrow(grid))))
+        res  <- lapply(grid, 
+    }
     y  <- as.character(exp[3])
     if (op == "%AND%") {
         x.cnf  <- cnf(x, p)
