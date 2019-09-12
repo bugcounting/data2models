@@ -1,8 +1,8 @@
 Sources of data in this directory:
 
    - The SpamAssassin public corpus
-	  https://spamassassin.apache.org/old/publiccorpus/
-	- The Ling-Spam dataset
-	  http://www.aueb.gr/users/ion/data/lingspam_public.tar.gz
-	  http://www.aueb.gr/users/ion/docs/ir_memory_based_antispam_filtering.pdf
+     https://spamassassin.apache.org/old/publiccorpus/
+   - The Ling-Spam dataset
+     http://www.aueb.gr/users/ion/data/lingspam_public.tar.gz
+     http://www.aueb.gr/users/ion/docs/ir_memory_based_antispam_filtering.pdf
 
