@@ -20,7 +20,7 @@ cnf <- function(fml, p)
         res  <- p[[as.character(exp)]]
         if (is.null(res))
             res  <- 0
-        return (res)
+        return (list(res))
     }
     if (class(exp) == "(")
         return (cnf(as.character(exp[2]), p))
@@ -35,10 +35,9 @@ cnf <- function(fml, p)
     if (op == "%OR%") {
         x.cnf  <- cnf(x, p)
         y.cnf  <- cnf(y, p)
-        df  <- expand.grid(x.cnf, y.cnf, KEEP.OUT.ATTRS=FALSE)
-        colnames(df)  <- NULL
-        rownames(df)  <- NULL
-        res  <- split(df, seq(nrow(df)))
+        grid  <- expand.grid(1:length(x.cnf), 1:length(y.cnf))
+        grid  <- split(grid, seq(nrow(grid)))
+        res  <- lapply(grid, function(r) c(unlist(x.cnf[[r[,1]]]), unlist(y.cnf[[r[,2]]])))
         names(res)  <- NULL
         return(res)
     }
@@ -46,5 +45,5 @@ cnf <- function(fml, p)
 
 tf <- c(TRUE, FALSE)
 truth.table <- expand.grid(A=tf, B=tf, C=tf)
-formula <- with(combinations, (A | B | C) & (!A | (!B & !C)) & (!B | (!A & !C)) & (!C | (!B & !A)) & (!A | (!B & C)) & (A | B) & (!B | !A) & (B | (A & C)) & (C | (!A & B)))
+formula <- with(truth.table, (A | B | C) & (!A | (!B & !C)) & (!B | (!A & !C)) & (!C | (!B & !A)) & (!A | (!B & C)) & (A | B) & (!B | !A) & (B | (A & C)) & (C | (!A & B)))
 truth.table$formula <- formula
