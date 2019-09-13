@@ -1,12 +1,3 @@
-#!  /usr/bin/env Rscript
-
-## Andy: n >= 4
-## Bill: n < 4
-## Charlie: n >= 1
-## At least one is right: A | B | C
-## Exactly one is right: (A ==> (!B & !C)) & (B ==> (!A & !B)) & (C ==> (!B & !A))
-## Numerical relations: (!A | (!B & C)) & (A | B) & (!B | !A) & (B | (A & C)) & (C | (!A & B))
-
 ## Operators compose CNF formulas
 `%AND%` <- function(x, y)
 {
@@ -39,6 +30,11 @@ not <- function(x)
 
 `%<==>%` <- function(x, y) { }
 
+## Convert string `fml` into CNF using proposition mapping in props
+## If props is empty, generate mappings.
+## Return list with:
+##    $cnf (list): CNF representation of `fml`
+##    $props (list): mapping proposition names used in `fml` to numbers used to represent them
 cnf <- function(fml, props=list())
 {
     ex  <- parse(text=fml)[[1]]
@@ -82,9 +78,3 @@ cnf <- function(fml, props=list())
         list(cnf=fml, props=y.rec$props)
     }
 }
-
-
-tf <- c(TRUE, FALSE)
-truth.table <- expand.grid(A=tf, B=tf, C=tf)
-formula <- with(truth.table, (A | B | C) & (!A | (!B & !C)) & (!B | (!A & !C)) & (!C | (!B & !A)) & (!A | (!B & C)) & (A | B) & (!B | !A) & (B | (A & C)) & (C | (!A & B)))
-truth.table$formula <- formula
