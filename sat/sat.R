@@ -7,50 +7,75 @@
 ## Exactly one is right: (A ==> (!B & !C)) & (B ==> (!A & !B)) & (C ==> (!B & !A))
 ## Numerical relations: (!A | (!B & C)) & (A | B) & (!B | !A) & (B | (A & C)) & (C | (!A & B))
 
-`%AND%` <- function(t, u) { }
-`%OR%` <- function(t, u) { }
-not <- function(t) { }
-`%==>%` <- function(t) { }
-
-cnf <- function(fml, p)
+## Operators compose CNF formulas
+`%AND%` <- function(x, y)
 {
-    exp  <- parse(text=fml)[[1]]
+    c(x, y)
+}
+
+`%OR%` <- function(x, y)
+{
+    grid  <- expand.grid(1:length(x), 1:length(y))
+    grid  <- split(grid, seq(nrow(grid)))
+    res  <- lapply(grid, function(g) c(unlist(x[[g[,1]]]), unlist(y[[g[,2]]])))
+    names(res)  <- NULL
+    res
+}
+
+not <- function(x)
+{
+    not.x  <- lapply(x, function(r) -1*r)
+    lens  <- lapply(not.x, function(r) 1:length(r))
+    grid  <- expand.grid(lens)
+    grid  <- split(grid, unlist(seq(nrow(grid))))
+    res  <- lapply(grid,
+                   function (g) sapply(seq_along(not.x),
+                                       function (k) not.x[[k]][g[,k]]))
+    names(res)  <- NULL
+    res
+}
+
+`%==>%` <- function(x, y) { }
+
+`%<==>%` <- function(x, y) { }
+
+cnf <- function(fml, p=list())
+{
+    ex  <- parse(text=fml)[[1]]
     ## atom: proposition
-    if (class(exp) == "name") {
-        res  <- p[[as.character(exp)]]
+    if (class(ex) == "name") {
+        res  <- p[[as.character(ex)]]
         if (is.null(res))
             res  <- 0
         return (list(res))
     }
-    if (class(exp) == "(")
-        return (cnf(as.character(exp[2]), p))
-    op  <- as.character(exp[1])
-    x  <- as.character(exp[2])
-    if (op == "not") {
-        x.cnf  <- cnf(x, p)
-        not.x  <- lapply(x.cnf, function(r) -1*r)
-        lens  <- lapply(not.x, function(r) 1:length(r))
-        grid  <- expand.grid(lens)
-        grid  <- split(grid, unlist(seq(nrow(grid))))
-        res  <- lapply(grid, function (g) sapply(seq_along(not.x), function (k) not.x[[k]][g[,k]]))
-        names(res)  <- NULL
-        return(res)
-    }
-    y  <- as.character(exp[3])
-    if (op == "%==>%") {
-        return (cnf(paste("not(", x, ") %OR% (", y, ")", sep=""), p))
-    }
+    ## remove parentheses
+    if (class(ex) == "(")
+        return (cnf(as.character(ex[2]), p))
+    op  <- as.character(ex[1])
+    x  <- as.character(ex[2])
     x.cnf  <- cnf(x, p)
-    y.cnf  <- cnf(y, p)
-    if (op == "%AND%") {
-        return (c(x.cnf, y.cnf))
-    }
-    if (op == "%OR%") {
-        grid  <- expand.grid(1:length(x.cnf), 1:length(y.cnf))
-        grid  <- split(grid, seq(nrow(grid)))
-        res  <- lapply(grid, function(g) c(unlist(x.cnf[[g[,1]]]), unlist(y.cnf[[g[,2]]])))
-        names(res)  <- NULL
-        return(res)
+    if (length(ex) < 3)
+        ## unary operator: apply CNF definition
+        eval(call(op, x.cnf))
+    else {
+        ## binary operator
+        y  <- as.character(ex[3])
+        if (op == "%==>%")
+            ## implies is just a shorthand
+            cnf(paste("not(", x, ") %OR% (", y, ")", sep=""), p)
+        else {
+            if (op == "%<==>%") {
+                imp  <- cnf(paste("((", x, ") %==>% (", y, "))", sep=""), p)
+                coimp  <- cnf(paste("((", y, ") %==>% (", x, "))", sep=""), p)
+                imp %AND% coimp
+            }
+            else {
+                ## primitive binary operator: apply CNF definition
+                y.cnf  <- cnf(y, p)
+                eval(call(op, x.cnf, y.cnf))
+            }
+        }
     }
 }
 
