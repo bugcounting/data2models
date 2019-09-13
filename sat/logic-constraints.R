@@ -179,3 +179,11 @@ for (y in 1:9)  # for each column y
 
 ## each value appears in each block once
 unique.blocks  <- list()
+for (b in 1:9)  # for each block y
+    for (v in 1:9) {  # for each value v
+        # all pairs of cells in the block
+        pairs  <- combn(subset(cells, block==b & val==v)$var, 2)
+        # constraint
+        unique.blocks  <- c(unique.blocks, split(-1*pairs, rep(1:ncol(pairs), each=nrow(pairs))))
+        names(unique.blocks)  <- NULL
+    }
