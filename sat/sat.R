@@ -39,45 +39,50 @@ not <- function(x)
 
 `%<==>%` <- function(x, y) { }
 
-cnf <- function(fml, p=list())
+cnf <- function(fml, props=list())
 {
     ex  <- parse(text=fml)[[1]]
     ## atom: proposition
     if (class(ex) == "name") {
-        res  <- p[[as.character(ex)]]
-        if (is.null(res))
-            res  <- 0
-        return (list(res))
+        exs  <- as.character(ex)
+        res  <- props[[exs]]
+        if (is.null(res)) {
+            res  <- length(props)+1
+            props[[exs]]  <- res
+        }
+        return (list(cnf=list(res), props=props))
     }
     ## remove parentheses
     if (class(ex) == "(")
-        return (cnf(as.character(ex[2]), p))
+        return (cnf(as.character(ex[2]), props))
     op  <- as.character(ex[1])
     x  <- as.character(ex[2])
-    x.cnf  <- cnf(x, p)
-    if (length(ex) < 3)
+    x.rec  <- cnf(x, props)
+    x.cnf  <- x.rec$cnf
+    if (length(ex) < 3) {
         ## unary operator: apply CNF definition
-        eval(call(op, x.cnf))
-    else {
+        fml  <- eval(call(op, x.cnf))
+        list(cnf=fml, props=x.rec$props)
+    }  else {
         ## binary operator
         y  <- as.character(ex[3])
         if (op == "%==>%")
             ## implies is just a shorthand
-            cnf(paste("not(", x, ") %OR% (", y, ")", sep=""), p)
-        else {
-            if (op == "%<==>%") {
-                imp  <- cnf(paste("((", x, ") %==>% (", y, "))", sep=""), p)
-                coimp  <- cnf(paste("((", y, ") %==>% (", x, "))", sep=""), p)
-                imp %AND% coimp
-            }
-            else {
-                ## primitive binary operator: apply CNF definition
-                y.cnf  <- cnf(y, p)
-                eval(call(op, x.cnf, y.cnf))
-            }
+            return (cnf(paste("not(", x, ") %OR% (", y, ")", sep=""), props))
+        if (op == "%<==>%") {
+                imp  <- cnf(paste("((", x, ") %==>% (", y, "))", sep=""), props)
+                coimp  <- cnf(paste("((", y, ") %==>% (", x, "))", sep=""), imp$props)
+                fml  <- imp$cnf %AND% coimp$cnf
+                return (list(cnf=fml, coimp$props))
         }
+        ## primitive binary operator: apply CNF definition
+        y.rec  <- cnf(y, x.rec$props)
+        y.cnf  <- y.rec$cnf
+        fml  <- eval(call(op, x.cnf, y.cnf))
+        list(cnf=fml, props=y.rec$props)
     }
 }
+
 
 tf <- c(TRUE, FALSE)
 truth.table <- expand.grid(A=tf, B=tf, C=tf)
