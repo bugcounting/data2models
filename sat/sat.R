@@ -1,4 +1,3 @@
-
 `%==>%` <- function(x, y) { }
 `%<==>%` <- function(x, y) { }
 
@@ -85,16 +84,16 @@ simplify  <- function(fml, operators=identity)
     ex  <- parse(text=fml)[[1]]
     if (class(ex) == "call") {
         op  <- as.character(ex[1])
-        x  <- simplify(as.character(ex[2]))
+        x  <- simplify(as.character(ex[2]), operators)
         if (length(ex) > 2)
-            y  <- simplify(as.character(ex[3]))
+            y  <- simplify(as.character(ex[3]), operators)
         if (op == "%==>%") {
-            return (paste("not(", x, ") ", operators("%OR%"), " (", y, ")", sep=""))
+            return (simplify(paste("not(", x, ") %OR% (", y, ")", sep=""), operators))
         }
         if (op == "%<==>%") {
             imp  <- paste("((", x, ") %==>% (", y, "))", sep="")
             coimp  <- paste("((", y, ") %==>% (", x, "))", sep="")
-            return (simplify(paste("(", imp, ") ", operators("%AND%"), " (", coimp, ")", sep="")))
+            return (simplify(paste("(", imp, ") %AND% (", coimp, ")", sep=""), operators))
         }
         if (length(ex) > 2)
             return (paste(x, operators(op), y))
@@ -102,7 +101,7 @@ simplify  <- function(fml, operators=identity)
             return (paste(operators(op), "(", x, ")", sep=""))
     }
     if (class(ex) == "(") {
-        paste("(", simplify(as.character(ex[2])), ")", sep="")
+        paste("(", simplify(as.character(ex[2]), operators), ")", sep="")
     } else {
         fml
     }
@@ -118,6 +117,8 @@ boolean.operators  <- function(op)
            op)
 }
 
+
+## Build the truth table for formula `fml` given as a string
 truth.table  <- function(fml)
 {
     sf  <- parse(text=simplify(fml, operators=boolean.operators))
