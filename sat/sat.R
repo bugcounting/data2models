@@ -2,7 +2,6 @@
 `%==>%` <- function(x, y) { }
 `%<==>%` <- function(x, y) { }
 
-
 ## Operators compose CNF formulas
 `%AND%` <- function(x, y)
 {
@@ -81,7 +80,7 @@ cnf <- function(fml, props=list())
 
 
 ## Simplify a propositional formula by rewriting away implications and coimplications
-simplify  <- function(fml)
+simplify  <- function(fml, operators=identity)
 {
     ex  <- parse(text=fml)[[1]]
     if (class(ex) == "call") {
@@ -90,21 +89,42 @@ simplify  <- function(fml)
         if (length(ex) > 2)
             y  <- simplify(as.character(ex[3]))
         if (op == "%==>%") {
-            return (paste("not(", x, ") %OR% (", y, ")", sep=""))
+            return (paste("not(", x, ") ", operators("%OR%"), " (", y, ")", sep=""))
         }
         if (op == "%<==>%") {
             imp  <- paste("((", x, ") %==>% (", y, "))", sep="")
             coimp  <- paste("((", y, ") %==>% (", x, "))", sep="")
-            return (simplify(paste("(", imp, ") %AND% (", coimp, ")", sep="")))
+            return (simplify(paste("(", imp, ") ", operators("%AND%"), " (", coimp, ")", sep="")))
         }
         if (length(ex) > 2)
-            return (paste(x, op, y))
+            return (paste(x, operators(op), y))
         else
-            return (paste(op, "(", x, ")", sep=""))
+            return (paste(operators(op), "(", x, ")", sep=""))
     }
     if (class(ex) == "(") {
         paste("(", simplify(as.character(ex[2])), ")", sep="")
     } else {
         fml
     }
+}
+
+## Mapping of R's native Boolean operators
+boolean.operators  <- function(op)
+{
+    switch(op,
+           "%AND%"="&",
+           "%OR%"="|",
+           "not"="!",
+           op)
+}
+
+truth.table  <- function(fml)
+{
+    sf  <- parse(text=simplify(fml, operators=boolean.operators))
+    props  <- names(cnf(simplify(fml))$props)
+    res  <- lapply(props, function(p) c(TRUE, FALSE))
+    names(res)  <- props
+    res  <- expand.grid(res)
+    res$formula  <- with(res, eval(sf))
+    data.frame(res)
 }
