@@ -133,7 +133,7 @@ sudoku  <- c(
 cells  <- expand.grid(row=1:9, col=1:9)
 cells  <- merge(cells, list(val=1:9), by=c())
 cells$var  <- 1:nrow(cells)
-cells$block  <- 
+cells$block  <- 1+3*((cells$row-1) %/% 3)+3*((cells$col-1)%%3)
 
 
 ## each cell has a value between 1 and 9
