@@ -32,7 +32,9 @@ cnf <- function(fml, p)
         lens  <- lapply(not.x, function(r) 1:length(r))
         grid  <- expand.grid(lens)
         grid  <- split(grid, unlist(seq(nrow(grid))))
-        res  <- lapply(grid, 
+        res  <- lapply(grid, function (g) sapply(seq_along(not.x), function (k) not.x[[k]][g[,k]]))
+        names(res)  <- NULL
+        return(res)
     }
     y  <- as.character(exp[3])
     if (op == "%AND%") {
@@ -45,7 +47,7 @@ cnf <- function(fml, p)
         y.cnf  <- cnf(y, p)
         grid  <- expand.grid(1:length(x.cnf), 1:length(y.cnf))
         grid  <- split(grid, seq(nrow(grid)))
-        res  <- lapply(grid, function(r) c(unlist(x.cnf[[r[,1]]]), unlist(y.cnf[[r[,2]]])))
+        res  <- lapply(grid, function(g) c(unlist(x.cnf[[g[,1]]]), unlist(y.cnf[[g[,2]]])))
         names(res)  <- NULL
         return(res)
     }
