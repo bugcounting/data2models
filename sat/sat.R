@@ -37,14 +37,15 @@ cnf <- function(fml, p)
         return(res)
     }
     y  <- as.character(exp[3])
+    if (op == "%==>%") {
+        return (cnf(paste("not(", x, ") %OR% (", y, ")", sep=""), p))
+    }
+    x.cnf  <- cnf(x, p)
+    y.cnf  <- cnf(y, p)
     if (op == "%AND%") {
-        x.cnf  <- cnf(x, p)
-        y.cnf  <- cnf(y, p)
         return (c(x.cnf, y.cnf))
     }
     if (op == "%OR%") {
-        x.cnf  <- cnf(x, p)
-        y.cnf  <- cnf(y, p)
         grid  <- expand.grid(1:length(x.cnf), 1:length(y.cnf))
         grid  <- split(grid, seq(nrow(grid)))
         res  <- lapply(grid, function(g) c(unlist(x.cnf[[g[,1]]]), unlist(y.cnf[[g[,2]]])))
