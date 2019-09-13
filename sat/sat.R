@@ -118,9 +118,12 @@ boolean.operators  <- function(op)
 }
 
 
-## Build the truth table for formula `fml` given as a string
-truth.table  <- function(fml)
+## Build the truth table for formula `formula` given as a string
+## If `formula` is a vector of strings, they are interpreted as a conjunction
+truth.table  <- function(formula)
 {
+    fml  <- paste(sapply(formula, function(s) paste("(", s, ")", sep="")),
+                  collapse="  %AND% ")
     sf  <- parse(text=simplify(fml, operators=boolean.operators))
     props  <- names(cnf(simplify(fml))$props)
     res  <- lapply(props, function(p) c(TRUE, FALSE))
@@ -128,4 +131,17 @@ truth.table  <- function(fml)
     res  <- expand.grid(res)
     res$formula  <- with(res, eval(sf))
     data.frame(res)
+}
+
+
+check.sat  <- function(formula)
+{
+    library(rpicosat)
+    fml  <- paste(sapply(formula, function(s) paste("(", s, ")", sep="")),
+                  collapse="  %AND% ")
+    sf  <- cnf(simplify(fml))
+    props  <- sf$props
+    sat  <- as.data.frame(picosat_sat(sf$cnf))
+    sat$variable  <- sapply(sat$variable, function(n) names(props)[unlist(props)[n]])
+    sat
 }
