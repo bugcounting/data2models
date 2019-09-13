@@ -1,3 +1,10 @@
+
+`%AND%`
+not  <- function(x) { }
+`%==>%` <- function(x, y) { }
+`%<==>%` <- function(x, y) { }
+
+
 ## Operators compose CNF formulas
 `%AND%` <- function(x, y)
 {
@@ -26,15 +33,17 @@ not <- function(x)
     res
 }
 
-`%==>%` <- function(x, y) { }
 
-`%<==>%` <- function(x, y) { }
-
-## Convert string `fml` into CNF using proposition mapping in props
+## Convert formula `fml` into CNF using proposition mapping in props
+## Formula `fml` must only use 
 ## If props is empty, generate mappings.
+##
 ## Return list with:
 ##    $cnf (list): CNF representation of `fml`
 ##    $props (list): mapping proposition names used in `fml` to numbers used to represent them
+##
+## The conversion is done using distributivity and de Morgan's laws. Therefore, it
+## may blow up when there is a lot of alternation between AND and OR formulas.
 cnf <- function(fml, props=list())
 {
     ex  <- parse(text=fml)[[1]]
@@ -56,25 +65,48 @@ cnf <- function(fml, props=list())
     x.rec  <- cnf(x, props)
     x.cnf  <- x.rec$cnf
     if (length(ex) < 3) {
-        ## unary operator: apply CNF definition
+        ## unary operator
         fml  <- eval(call(op, x.cnf))
+        ##         apply CNF definition
         list(cnf=fml, props=x.rec$props)
     }  else {
         ## binary operator
         y  <- as.character(ex[3])
-        if (op == "%==>%")
-            ## implies is just a shorthand
-            return (cnf(paste("not(", x, ") %OR% (", y, ")", sep=""), props))
-        if (op == "%<==>%") {
-                imp  <- cnf(paste("((", x, ") %==>% (", y, "))", sep=""), props)
-                coimp  <- cnf(paste("((", y, ") %==>% (", x, "))", sep=""), imp$props)
-                fml  <- imp$cnf %AND% coimp$cnf
-                return (list(cnf=fml, coimp$props))
-        }
-        ## primitive binary operator: apply CNF definition
+        ## apply CNF definition
         y.rec  <- cnf(y, x.rec$props)
         y.cnf  <- y.rec$cnf
         fml  <- eval(call(op, x.cnf, y.cnf))
         list(cnf=fml, props=y.rec$props)
+    }
+}
+
+
+
+## Simplify a propositional formula by rewriting away implications and coimplications
+simplify  <- function(fml)
+{
+    ex  <- parse(text=fml)[[1]]
+    if (class(ex) == "call") {
+        op  <- as.character(ex[1])
+        x  <- simplify(as.character(ex[2]))
+        if (length(ex) > 2)
+            y  <- simplify(as.character(ex[3]))
+        if (op == "%==>%") {
+            return (paste("not(", x, ") %OR% (", y, ")", sep=""))
+        }
+        if (op == "%<==>%") {
+            imp  <- paste("((", x, ") %==>% (", y, "))", sep="")
+            coimp  <- paste("((", y, ") %==>% (", x, "))", sep="")
+            return (simplify(paste("(", imp, ") %AND% (", coimp, ")", sep="")))
+        }
+        if (length(ex) > 2)
+            return (paste(x, op, y))
+        else
+            return (paste(op, "(", x, ")", sep=""))
+    }
+    if (class(ex) == "(") {
+        paste("(", simplify(as.character(ex[2])), ")", sep="")
+    } else {
+        fml
     }
 }
