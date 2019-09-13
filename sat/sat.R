@@ -1,6 +1,4 @@
 
-`%AND%`
-not  <- function(x) { }
 `%==>%` <- function(x, y) { }
 `%<==>%` <- function(x, y) { }
 
