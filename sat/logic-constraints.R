@@ -1,33 +1,92 @@
 #!  /usr/bin/env Rscript
 
 library(rpicosat)
-source("sat.R")
 
-simple  <- "(A %==>% B) %AND% (B %==>% C) %AND% (C %==>% A)"
+
+### Simple example of SAT formula and truth table
+
+simple  <- "(A ==> B) /\ (B ==> C) /\ (C ==> A)"
 tf <- c(TRUE, FALSE)
 table  <- expand.grid(A=tf, B=tf, C=tf)
 table$formula  <- with(table, (!A | B) & (!B | C) & (!C | A))
 
-## Andy: n >= 4
-## Beverly: n < 4
-## Charlie: n >= 1
-## At least one is right:
-one.is.right  <- "A %OR% B %OR% C"
-exactly.one  <- c("A %==>% (not(B) %AND% not(C))", # if A is right, B and C are not
-                  "B %==>% (not(C) %AND% not(A))", # if B is right, C and A are not
-                  "C %==>% (not(A) %AND% not(B))") # if C is right, A and B are not
-numerical.relations  <- c("A %==>% (not(B) %AND% C)",
-                          "B %==>% not(A)",
-                          "not(A) %==>% B",
-                          "not(B) %==>% (A %AND% C)",
-                          "not(C) %==>% B")
+
+### A more interesting example.
+##
+## Three friends, Andy, Beverly, and Charlie, disagree about the
+## number `n` of paintings that a common friend owns:
+##   - Andy thinks they are at least four: n >= 4
+##   - Beverly thinks they are less than four: n < 4
+##   - Charlie thinks they are at least one: n >= 1
+## We know that exacly one of the three friends is right. How much is n?
+##
+## At least one is right
+one.is.right  <- "A \/ B \/ C"
+## Exacly one is right
+exactly.one  <- c("A ==> (~B /\ ~C)", # if A is right, B and C are not
+                  "B ==> (~C /\ ~A)", # if B is right, C and A are not
+                  "C ==> (~A /\ ~B)") # if C is right, A and B are not
+## Relations induced by arithmetic properties
+numerical.relations  <- c("A ==> (~B /\ C)",
+                          "B ==> ~A",
+                          "~A ==> B",
+                          "~B ==> (A /\ C)",
+                          "~C ==> B")
+table2  <- expand.grid(A=tf, B=tf, C=tf)
+table2$formula  <- with (table2, (A | B | C) &
+                                 (!A | (!B & !C)) & (!B | (!C & !A)) & (!C | (!A & !B)) &
+                                 (!A | (!B & C)) & (!B | !A) & (A | B) & (B | (A & C)) & (C | B))
+
+## To convert to CNF, let's use de Morgan's law: X | (Y & Z) == (X | Y) & (X | Z)
+## A | B | C
+## !A | !B
+## !A | !C
+## !B | !C
+## !B | !A
+## !C | !A
+## !C | !B
+## !A | !B
+## !A | C
+## !B | !A
+## A | B
+## B | A
+## B | C
+## C | B
+## Mapping A -> 1, B -> 2, C -> 3, and -1 to negation:
+friends.constraint  <- list(
+    c(1, 2, 3),
+    c(-1, -2),
+    c(-1, -3),
+    c(-2, -3),
+    c(-2, -1),
+    c(-3, -1),
+    c(-3, -2),
+    c(-1, -2),
+    c(-1, 3),
+    c(-2, -1),
+    c(1, 2),
+    c(2, 1),
+    c(2, 3),
+    c(3, 2)
+)
+
+res  <- picosat_sat(friends.constraint)
+as.data.frame(res)
 
 
-cells  <- expand.grid(row=1:9, col=1:9)
-cells  <- merge(cells, list(val=1:9), by=c())
-cells$var  <- 1:nrow(cells)
+### SUDOKU
 
-## Block of cell in row x column y
+
+## Data frame with enumeration of all possible values of all cells in the grid
+cells  <- expand.grid(row=1:9, col=1:9)       ## all possible row/column combinations
+cells  <- merge(cells, list(val=1:9), by=c()) ## each cell may take one of 9 possible values
+cells$var  <- 1:nrow(cells)  ## unique variable number to each cell/value combination
+
+## We also need to be able to know which of nine 3x3 blocks each cell belongs to.
+## Blocks are numbered from the top-left corner, going by row.
+## This is consistent with numbering rows and columns from the top-left corner.
+
+## Block of cell in row `x` column `y`
 block.of  <- function(x, y)
 {
     x2  <- ((x-1) %/% 3)
@@ -37,7 +96,7 @@ block.of  <- function(x, y)
 cells$block  <- block.of(cells$row, cells$col)
 
 
-## each cell has a value between 1 and 9
+## Constraint: each cell has a value between 1 and 9
 has.one.value  <- list()
 for (x in 1:9)  # for each row x
     for (y in 1:9) { # for each column y
@@ -45,7 +104,7 @@ for (x in 1:9)  # for each row x
         has.one.value  <- c(has.one.value, list(subset(cells, row==x & col==y)$var))
     }
 
-## the value of each cell is uniquely defined
+## Constraint: the value of each cell is uniquely defined
 unique.value  <- list()
 for (x in 1:9) # for each row x
     for (y in 1:9) { # for each column y
@@ -56,7 +115,7 @@ for (x in 1:9) # for each row x
         names(unique.value)  <- NULL
     }
 
-## each value appears in each row once
+## Constraint: each value appears in each row once
 unique.rows  <- list()
 for (x in 1:9)  # for each row x
     for (v in 1:9) {  # for each value v
@@ -67,7 +126,7 @@ for (x in 1:9)  # for each row x
         names(unique.rows)  <- NULL
     }
 
-## each value appears in each column once
+## Constraint: each value appears in each column once
 unique.cols  <- list()
 for (y in 1:9)  # for each column y
     for (v in 1:9) {  # for each value v
@@ -78,7 +137,7 @@ for (y in 1:9)  # for each column y
         names(unique.cols)  <- NULL
     }
 
-## each value appears in each block once
+## Constraint: each value appears in each block once
 unique.blocks  <- list()
 for (b in 1:9)  # for each block y
     for (v in 1:9) {  # for each value v
@@ -89,6 +148,7 @@ for (b in 1:9)  # for each block y
         names(unique.blocks)  <- NULL
     }
 
+## All constraints together
 sudoku.constraints  <- c(has.one.value, unique.value, unique.rows, unique.cols, unique.blocks)
 length(sudoku.constraints)
 sol  <- picosat_sat(sudoku.constraints)
@@ -113,9 +173,13 @@ print.solution  <- function(sat.sol, cells)
 print.solution(sol, cells)
 
 
+## We need to add a way of add "hints", that is values that have been
+## already placed on the grid.
+
 ## Constraint that cell at row `x` column `y` must have value `v`
 constraint  <- function(x, y, v, cells)
 {
+    ## Lookup the corresponding variable, which is asserted TRUE
     var  <- subset(cells, row==x & col==y & val==v)$var
     var
 }
