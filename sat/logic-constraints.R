@@ -127,13 +127,22 @@ sudoku  <- c(
     ands(as.vector(sapply(1:9, function (n) value.of.row(n)))),
     ands(as.vector(sapply(1:9, function (n) value.of.col(n)))),
     ands(as.vector(sapply(1:9, function (n) value.of.block(n))))
-    )
+)
+
+
+## Block of cell in row x column y
+block.of  <- function(x, y)
+{
+    x2  <- ((x-1) %/% 3)
+    y2  <- ((y-1) %/% 3)
+    1 + 3*x2 + y2
+}
 
 
 cells  <- expand.grid(row=1:9, col=1:9)
 cells  <- merge(cells, list(val=1:9), by=c())
 cells$var  <- 1:nrow(cells)
-cells$block  <- 1+3*((cells$row-1) %/% 3)+3*((cells$col-1)%%3)
+cells$block  <- block.of(cells$row, cells$col)
 
 
 ## each cell has a value between 1 and 9
