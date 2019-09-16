@@ -23,112 +23,9 @@ numerical.relations  <- c("A %==>% (not(B) %AND% C)",
                           "not(C) %==>% B")
 
 
-
-## X.r.c.v denotes that cell in row r and column c has value v
-
-## AND of all formulas `fms`
-ands  <- function(fms)
-{
-    paste(sapply(fms, function(s) paste("(", s, ")", sep="")), collapse=" %AND% ")
-}
-
-## OR of all formulas `fms`
-ors  <- function(fms)
-{
-    paste(sapply(fms, function(s) paste("(", s, ")", sep="")), collapse=" %OR% ")
-}
-
-## NOT applied to each formula in `fms`
-nots  <- function(fms)
-{
-    sapply(fms, function(s) paste("not(", s, ")", sep=""))
-}
-
-## Exactly one of formulas `fms` is true
-just.one  <- function(fms)
-{
-    ors(sapply(1:length(fms), function(n) ands(c(fms[n], nots(fms[-n])))))
-}
-
-cell  <- function(r, c, v)
-{
-    paste(c("X", as.character(r), as.character(c), as.character(v)), collapse=".")
-}
-
-## Cell r, c has a well-defined number between 1 and 9
-## That is, not(X.r.c.v %AND% X.r.c.u) for all v != u
-value.of.cell  <- function(r, c)
-{
-    apply(subset(expand.grid(v=1:9, u=1:9), v < u),
-          1,
-          function(d) paste("not(", ands(c(cell(r, c, d[1]), cell(r, c, d[2]))), ")", sep=""))
-}
-
-## Row r includes all numbers between 1 and 9
-## That is, not(X.r.c1.v %AND% X.r.c2.v) for all c1 != c2 and all v
-value.of.row  <- function(r)
-{
-    ands(
-        as.vector(
-            sapply(1:9,
-                   function(v)
-                       apply(subset(expand.grid(x=1:9, y=1:9), x < y),
-                             1,
-                             function(d) paste("not(", ands(c(cell(r, d[1], v),
-                                                              cell(r, d[2], v))), ")", sep="")))
-        )
-    )
-}
-
-## Column c includes all numbers between 1 and 9
-## That is, not(X.r1.c.v %AND% X.r2.c.v) for all r1 != r2 and all v
-value.of.col  <- function(c)
-{
-    ands(
-        as.vector(
-            sapply(1:9,
-                   function(v)
-                       apply(subset(expand.grid(x=1:9, y=1:9), x < y),
-                             1,
-                             function(d) paste("not(", ands(c(cell(d[1], c, v),
-                                                              cell(d[2], c, v))), ")", sep="")))
-        )
-    )
-}
-
-
-## Data frame with row, column coordinates of block #b
-block  <- function(b)
-{
-    first.row  <- 1+3*((b - 1) %/% 3)
-    first.col  <- 1+3*((b - 1) %% 3)
-    expand.grid(x=first.row:(first.row+2), y=first.col:(first.col+2))
-}
-
-## Block b includes all numbers between 1 and 9
-value.of.block  <- function(b)
-{
-    ands(
-        as.vector(
-            sapply(1:9,
-                   function(v)
-                       apply(subset(merge(block(b), block(b), by=c()),
-                                    x.x < x.y | (x.x == x.y & y.x < y.y)),
-                             1,
-                             function(d) paste("not(", ands(c(cell(d[1], d[2], v),
-                                                              cell(d[3], d[4], v))), ")", sep="")))
-        )
-    )
-}
-
-
-sudoku  <- c(
-    ands(as.vector(apply(expand.grid(1:9, 1:9), 1, function (e) value.of.cell(e[1], e[2])))),
-    ands(as.vector(sapply(1:9, function (n) value.of.row(n)))),
-    ands(as.vector(sapply(1:9, function (n) value.of.col(n)))),
-    ands(as.vector(sapply(1:9, function (n) value.of.block(n))))
-)
-
+cells  <- expand.grid(row=1:9, col=1:9)
+cells  <- merge(cells, list(val=1:9), by=c())
+cells$var  <- 1:nrow(cells)
 
 ## Block of cell in row x column y
 block.of  <- function(x, y)
@@ -137,11 +34,6 @@ block.of  <- function(x, y)
     y2  <- ((y-1) %/% 3)
     1 + 3*x2 + y2
 }
-
-
-cells  <- expand.grid(row=1:9, col=1:9)
-cells  <- merge(cells, list(val=1:9), by=c())
-cells$var  <- 1:nrow(cells)
 cells$block  <- block.of(cells$row, cells$col)
 
 
@@ -180,7 +72,7 @@ unique.cols  <- list()
 for (y in 1:9)  # for each column y
     for (v in 1:9) {  # for each value v
         # all pairs x1.y.v, x2.y.v
-        pairs  <- combn(subset(cells, col==x & val==v)$var, 2)
+        pairs  <- combn(subset(cells, col==y & val==v)$var, 2)
         # constraint not(x1.y.v AND x2.y.v), that is not(x1.y.v) OR not(x2.y.v)
         unique.cols  <- c(unique.cols, split(-1*pairs, rep(1:ncol(pairs), each=nrow(pairs))))
         names(unique.cols)  <- NULL
@@ -199,6 +91,7 @@ for (b in 1:9)  # for each block y
 
 sudoku.constraints  <- c(has.one.value, unique.value, unique.rows, unique.cols, unique.blocks)
 length(sudoku.constraints)
+sol  <- picosat_sat(sudoku.constraints)
 
 print.solution  <- function(sat.sol, cells)
 {
@@ -216,6 +109,9 @@ print.solution  <- function(sat.sol, cells)
     tab
 }
 
+print.solution(sol, cells)
+
+
 ## Constraint that cell at row x column y must have value v
 constraint  <- function(x, y, v, cells)
 {
@@ -223,33 +119,36 @@ constraint  <- function(x, y, v, cells)
     var
 }
 
-1, 1, 5
-1, 2, 3
-1, 5, 7
-2, 1, 6
-2, 4, 1
-2, 5, 9
-2, 6, 5
-3, 2, 9
-3, 3, 8
-3, 8, 6
-4, 1, 8
-4, 5, 6
-4, 9, 3
-5, 1, 4
-5, 4, 8
-5, 6, 3
-5, 9, 1
-6, 1, 7
-6, 5, 2
-6, 9, 6
-7, 2, 6
-7, 7, 2
-7, 8, 8
-8, 4, 4
-8, 5, 1
-8, 6, 9
-8, 9, 5
-9, 5, 8
-9, 8, 7
-9, 9, 9
+hints  <- list(constraint(1, 1, 5, cells),
+               constraint(1, 2, 3, cells),
+               constraint(1, 5, 7, cells),
+               constraint(2, 1, 6, cells),
+               constraint(2, 4, 1, cells),
+               constraint(2, 5, 9, cells),
+               constraint(2, 6, 5, cells),
+               constraint(3, 2, 9, cells),
+               constraint(3, 3, 8, cells),
+               constraint(3, 8, 6, cells),
+               constraint(4, 1, 8, cells),
+               constraint(4, 5, 6, cells),
+               constraint(4, 9, 3, cells),
+               constraint(5, 1, 4, cells),
+               constraint(5, 4, 8, cells),
+               constraint(5, 6, 3, cells),
+               constraint(5, 9, 1, cells),
+               constraint(6, 1, 7, cells),
+               constraint(6, 5, 2, cells),
+               constraint(6, 9, 6, cells),
+               constraint(7, 2, 6, cells),
+               constraint(7, 7, 2, cells),
+               constraint(7, 8, 8, cells),
+               constraint(8, 4, 4, cells),
+               constraint(8, 5, 1, cells),
+               constraint(8, 6, 9, cells),
+               constraint(8, 9, 5, cells),
+               constraint(9, 5, 8, cells),
+               constraint(9, 8, 7, cells),
+               constraint(9, 9, 9, cells))
+
+sol2  <- picosat_sat(c(sudoku.constraints, hints))
+print.solution(sol2, cells)
