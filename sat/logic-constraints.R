@@ -196,3 +196,60 @@ for (b in 1:9)  # for each block y
         unique.blocks  <- c(unique.blocks, split(-1*pairs, rep(1:ncol(pairs), each=nrow(pairs))))
         names(unique.blocks)  <- NULL
     }
+
+sudoku.constraints  <- c(has.one.value, unique.value, unique.rows, unique.cols, unique.blocks)
+length(sudoku.constraints)
+
+print.solution  <- function(sat.sol, cells)
+{
+    df  <- as.data.frame(sat.sol)
+    df  <- subset(df, value) ## keep only variables that are true
+    mdf  <- merge(df, cells, by.x="variable", by.y="var")
+    tab  <- data.frame(matrix(nrow=0, ncol=9))
+    for (x in 1:9) {
+        cur.row  <- c()
+        for (y in 1:9)
+            cur.row  <- c(cur.row, mdf[mdf$row == x & mdf$col == y, ]$val)
+        tab  <- rbind(tab, cur.row)
+    }
+    names(tab)  <- paste("C", 1:9, sep="")
+    tab
+}
+
+## Constraint that cell at row x column y must have value v
+constraint  <- function(x, y, v, cells)
+{
+    var  <- subset(cells, row==x & col==y & val==v)$var
+    var
+}
+
+1, 1, 5
+1, 2, 3
+1, 5, 7
+2, 1, 6
+2, 4, 1
+2, 5, 9
+2, 6, 5
+3, 2, 9
+3, 3, 8
+3, 8, 6
+4, 1, 8
+4, 5, 6
+4, 9, 3
+5, 1, 4
+5, 4, 8
+5, 6, 3
+5, 9, 1
+6, 1, 7
+6, 5, 2
+6, 9, 6
+7, 2, 6
+7, 7, 2
+7, 8, 8
+8, 4, 4
+8, 5, 1
+8, 6, 9
+8, 9, 5
+9, 5, 8
+9, 8, 7
+9, 9, 9
