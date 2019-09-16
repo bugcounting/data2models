@@ -93,6 +93,7 @@ sudoku.constraints  <- c(has.one.value, unique.value, unique.rows, unique.cols, 
 length(sudoku.constraints)
 sol  <- picosat_sat(sudoku.constraints)
 
+## Display Sudoku grid of `sat.sol` using mapping defined in `cells`
 print.solution  <- function(sat.sol, cells)
 {
     df  <- as.data.frame(sat.sol)
@@ -112,7 +113,7 @@ print.solution  <- function(sat.sol, cells)
 print.solution(sol, cells)
 
 
-## Constraint that cell at row x column y must have value v
+## Constraint that cell at row `x` column `y` must have value `v`
 constraint  <- function(x, y, v, cells)
 {
     var  <- subset(cells, row==x & col==y & val==v)$var
@@ -152,3 +153,16 @@ hints  <- list(constraint(1, 1, 5, cells),
 
 sol2  <- picosat_sat(c(sudoku.constraints, hints))
 print.solution(sol2, cells)
+
+## Constraint to look for a different solution than `sat.sol`
+relax  <- function(sat.sol)
+{
+    df  <- as.data.frame(sat.sol)
+    ## variables that are true in solution
+    vars  <- subset(df, value)$variable
+    ## constraint for new solution: at least one of the variables is false
+    list(-1*vars)
+}
+
+sol3  <- picosat_sat(c(sudoku.constraints, hints, relax(sol2)))
+print.solution(sol3, cells)
