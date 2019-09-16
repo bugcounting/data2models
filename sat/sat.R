@@ -143,7 +143,6 @@ check.sat  <- function(formula)
                   collapse="  %AND% ")
     sf  <- cnf(simplify(fml))
     props  <- sf$props
-    show("READY")
     sat  <- as.data.frame(picosat_sat(sf$cnf))
     sat$variable  <- sapply(sat$variable, function(n) names(props)[unlist(props)[n]])
     sat
