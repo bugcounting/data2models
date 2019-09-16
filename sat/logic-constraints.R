@@ -164,5 +164,53 @@ relax  <- function(sat.sol)
     list(-1*vars)
 }
 
-sol3  <- picosat_sat(c(sudoku.constraints, hints, relax(sol2)))
-print.solution(sol3, cells)
+sol.try  <- picosat_sat(c(sudoku.constraints, hints, relax(sol2)))
+print.solution(sol.try, cells)
+
+## Very hard Sudoku
+hints3  <- list(constraint(1, 3, 5, cells),
+                constraint(1, 7, 1, cells),
+                constraint(2, 2, 6, cells),
+                constraint(2, 3, 1, cells),
+                constraint(2, 7, 2, cells),
+                constraint(3, 4, 3, cells),
+                constraint(3, 5, 8, cells),
+                constraint(4, 2, 2, cells),
+                constraint(4, 9, 4, cells),
+                constraint(5, 5, 3, cells),
+                constraint(5, 9, 9, cells),
+                constraint(6, 2, 1, cells),
+                constraint(6, 3, 3, cells),
+                constraint(6, 4, 5, cells),
+                constraint(6, 9, 2, cells),
+                constraint(7, 1, 9, cells),
+                constraint(7, 6, 2, cells),
+                constraint(7, 8, 4, cells),
+                constraint(8, 8, 7, cells),
+                constraint(9, 1, 4, cells),
+                constraint(9, 5, 5, cells),
+                constraint(9, 6, 9, cells),
+                constraint(9, 9, 3, cells))
+sol3  <- picosat_sat(c(sudoku.constraints, hints3))
+
+## Number of different solutions of Sudoku with `hints`
+count.solutions  <- function(hints)
+{
+    nsol  <- 0
+    cur.sol  <- NULL
+    new.constraints  <- list()
+    while (TRUE) {
+        new.c  <- if (is.null(cur.sol)) list() else relax(cur.sol)
+        new.constraints  <- c(new.c, new.constraints)
+        cur.sol  <- picosat_sat(c(sudoku.constraints, hints, new.constraints))
+        if (picosat_solution_status(cur.sol) == "PICOSAT_SATISFIABLE")
+            nsol  <- nsol + 1
+        else
+            break
+    }
+    nsol
+}
+
+count.solutions(hints3[1:23])
+count.solutions(hints3[1:22])
+count.solutions(hints3[1:21])
