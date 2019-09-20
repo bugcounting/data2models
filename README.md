@@ -24,7 +24,8 @@ original sources.
       - Unpack it into a directory in your system (we'll call it `root` in these instructions)
 		 
    4. Open RStudio and issue the following commands from the pull-down menus:
-      - File -> Open File -> pick file `root/data2models/spam/pull_data.R`
+      - File -> Open File -> pick file
+        `root/data2models-master/spam/pull_data.R`
 	  - Session -> Set Working Directory -> To Source File Location
 	  - Code -> Source
 	  
