@@ -1,5 +1,7 @@
 #!  /usr/bin/env Rscript
 
+install.packages(c("tm", "rpicosat"))
+
 sa.archives  <- c("20030228_easy_ham.tar.bz2",
                   "20030228_easy_ham_2.tar.bz2",
                   "20030228_spam.tar.bz2",
