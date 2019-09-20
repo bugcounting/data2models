@@ -64,9 +64,9 @@ s.hp.cc <- summary.ci(m.hp.cc)
 ## R^2 has increased significantly! (use `summary` function with model)
 
 ## We cannot plot multivariate regression in one plot, but we can do
-## multiple plots while fixing the other predictor There are called
-## "counterfactuals" since they do not represent the actual data but
-## only the prediction in hypothetical situations
+## multiple plots, each with one varying predictor while fixing the
+## value of the other (typically to its mean value, or an interesting
+## discrete value in case of categorical variable).
 
 ## Let's put both plots in one panel
 par(mfrow=c(1,2)) # 1 row 2 cols
